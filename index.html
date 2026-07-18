@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizDeck — Test Your Knowledge</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+  :root{
+    --ink:#0f1a2b;
+    --paper:#eef1f6;
+    --panel:#ffffff;
+    --accent:#c9a24b;   /* muted brass gold */
+    --accent2:#3b6e6a;  /* deep teal */
+    --danger:#b5474b;
+    --success:#2f7a52;
+    --line:#d6dbe4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(201,162,75,0.10), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(59,110,106,0.12), transparent 45%),
+      var(--paper);
+    font-family:'Space Grotesk', sans-serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .app{
+    width:100%;
+    max-width:640px;
+  }
+  .masthead{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:18px;
+    padding:0 4px;
+  }
+  .brand{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:28px;
+    letter-spacing:-0.5px;
+  }
+  .brand span{color:var(--accent2);}
+  .tagline{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1.5px;
+    color:#6b7280;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:0 20px 40px -20px rgba(15,26,43,0.25);
+    overflow:hidden;
+  }
+
+  /* --- Progress rail --- */
+  .rail{
+    display:flex;
+    gap:6px;
+    padding:16px 20px 0 20px;
+  }
+  .rail-seg{
+    flex:1;
+    height:5px;
+    border-radius:3px;
+    background:var(--line);
+    overflow:hidden;
+  }
+  .rail-seg i{
+    display:block;
+    height:100%;
+    width:0%;
+    background:var(--accent2);
+    transition:width .35s ease;
+  }
+  .rail-seg.done i{width:100%;background:var(--accent2);}
+  .rail-seg.current i{width:100%;background:var(--accent);}
+
+  .meta-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px 0 20px;
+    font-size:13px;
+    color:#6b7280;
+  }
+  .timer{
+    font-variant-numeric: tabular-nums;
+    font-weight:700;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .timer.low{color:var(--danger);}
+
+  .q-body{padding:26px 24px 24px 24px;}
+  .q-eyebrow{
+    font-size:12px;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    color:var(--accent2);
+    font-weight:700;
+    margin-bottom:10px;
+  }
+  .q-text{
+    font-family:'Fraunces', serif;
+    font-size:22px;
+    line-height:1.35;
+    margin:0 0 22px 0;
+  }
+  .options{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .opt{
+    text-align:left;
+    padding:14px 16px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#fbfbfd;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:15px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition:border-color .15s, background .15s, transform .1s;
+  }
+  .opt:hover{border-color:var(--accent2); transform:translateX(2px);}
+  .opt .tag{
+    width:24px;height:24px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#6b7280;
+    flex-shrink:0;
+  }
+  .opt.correct{
+    border-color:var(--success);
+    background:rgba(47,122,82,0.08);
+  }
+  .opt.correct .tag{background:var(--success);border-color:var(--success);color:#fff;}
+  .opt.wrong{
+    border-color:var(--danger);
+    background:rgba(181,71,75,0.08);
+  }
+  .opt.wrong .tag{background:var(--danger);border-color:var(--danger);color:#fff;}
+  .opt.disabled{cursor:default;}
+  .opt.disabled:hover{transform:none;}
+
+  .footer-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 24px 24px 24px;
+    min-height:40px;
+  }
+  .feedback{
+    font-size:13.5px;
+    font-weight:500;
+  }
+  .feedback.ok{color:var(--success);}
+  .feedback.no{color:var(--danger);}
+  .next-btn{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    padding:11px 20px;
+    border-radius:8px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(4px);
+    transition:opacity .2s, transform .2s, background .15s;
+  }
+  .next-btn.show{opacity:1; transform:translateY(0);}
+  .next-btn:hover{background:var(--accent2);}
+
+  /* --- Start / result screens --- */
+  .screen{padding:44px 32px; text-align:center;}
+  .screen h1{
+    font-family:'Fraunces', serif;
+    font-size:30px;
+    margin:0 0 10px 0;
+  }
+  .screen p{color:#5b6472; font-size:15px; line-height:1.5; margin:0 0 28px 0;}
+  .btn-primary{
+    background:var(--accent2);
+    color:#fff;
+    border:none;
+    padding:14px 30px;
+    border-radius:9px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition:background .15s, transform .1s;
+  }
+  .btn-primary:hover{background:#2f5a57; transform:translateY(-1px);}
+
+  .score-ring{
+    width:150px;height:150px;
+    margin:0 auto 24px auto;
+    position:relative;
+  }
+  .score-ring svg{transform:rotate(-90deg);}
+  .score-ring .num{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family:'Fraunces', serif;
+  }
+  .score-ring .num b{font-size:34px; line-height:1;}
+  .score-ring .num span{font-size:12px; color:#6b7280; margin-top:4px;}
+
+  .verdict{
+    font-size:15px;
+    font-weight:700;
+    color:var(--accent2);
+    text-transform:uppercase;
+    letter-spacing:1px;
+    margin-bottom:6px;
+  }
+
+  .breakdown{
+    text-align:left;
+    border-top:1px solid var(--line);
+    margin-top:8px;
+    padding-top:18px;
+  }
+  .b-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    font-size:13.5px;
+    border-bottom:1px dashed var(--line);
+  }
+  .b-row .dot{
+    width:8px;height:8px;border-radius:50%;
+    display:inline-block;margin-right:8px;
+  }
+  .dot.ok{background:var(--success);}
+  .dot.no{background:var(--danger);}
+
+  @media (max-width:480px){
+    .q-text{font-size:19px;}
+    .brand{font-size:23px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="masthead">
+    <div>
+      <div class="brand">Quiz<span>Deck</span></div>
+      <div class="tagline">No sign-up · No database · Just knowledge</div>
+    </div>
+  </div>
+
+  <div class="card" id="card">
+    <!-- content injected by JS -->
+  </div>
+</div>
+
+<script>
+const QUESTION_POOL = [
+  {
+    q: "Which data structure uses LIFO (Last In, First Out) order?",
+    options: ["Queue", "Stack", "Linked List", "Graph"],
+    correct: 1,
+    explain: "A Stack pops the most recently pushed element first — classic LIFO behaviour."
+  },
+  {
+    q: "In HTML, which tag is used to embed JavaScript inside a webpage?",
+    options: ["<js>", "<javascript>", "<script>", "<code>"],
+    correct: 2,
+    explain: "The <script> tag embeds or references JavaScript in an HTML document."
+  },
+  {
+    q: "What does SQL stand for?",
+    options: ["Structured Query Language", "Sequential Query Logic", "Simple Query Language", "Server Query Link"],
+    correct: 0,
+    explain: "SQL = Structured Query Language, used to manage relational databases."
+  },
+  {
+    q: "Which HTTP method is typically used to update an existing resource?",
+    options: ["GET", "POST", "PUT", "DELETE"],
+    correct: 2,
+    explain: "PUT (or PATCH) is conventionally used to update an existing resource."
+  },
+  {
+    q: "In Python, what is the output of `type([])`?",
+    options: ["<class 'list'>", "<class 'array'>", "<class 'tuple'>", "<class 'dict'>"],
+    correct: 0,
+    explain: "Empty square brackets [] create a list object in Python."
+  },
+  {
+    q: "Which layer of the OSI model is responsible for routing packets?",
+    options: ["Data Link", "Network", "Transport", "Session"],
+    correct: 1,
+    explain: "The Network layer (Layer 3) handles logical addressing and routing."
+  },
+  {
+    q: "What is the time complexity of binary search on a sorted array?",
+    options: ["O(n)", "O(n log n)", "O(log n)", "O(1)"],
+    correct: 2,
+    explain: "Binary search halves the search space each step, giving O(log n)."
+  },
+  {
+    q: "Which of these is NOT a valid CSS position value?",
+    options: ["static", "relative", "floating", "sticky"],
+    correct: 2,
+    explain: "\"floating\" isn't a position value — CSS has static, relative, absolute, fixed, and sticky."
+  },
+  {
+    q: "Which keyword is used to create a class in Python?",
+    options: ["class", "def", "struct", "object"],
+    correct: 0,
+    explain: "Python classes are declared using the `class` keyword."
+  },
+  {
+    q: "Which of these is a NoSQL database?",
+    options: ["MySQL", "PostgreSQL", "MongoDB", "SQLite"],
+    correct: 2,
+    explain: "MongoDB is a document-oriented NoSQL database; the others are relational (SQL)."
+  },
+  {
+    q: "What does 'DOM' stand for in web development?",
+    options: ["Document Object Model", "Data Object Management", "Display Output Mode", "Document Order Mapping"],
+    correct: 0,
+    explain: "The DOM (Document Object Model) represents the HTML page as a tree of objects."
+  },
+  {
+    q: "Which sorting algorithm has the best average-case time complexity?",
+    options: ["Bubble Sort", "Selection Sort", "Merge Sort", "Insertion Sort"],
+    correct: 2,
+    explain: "Merge Sort runs in O(n log n) average and worst case, better than the others' O(n²)."
+  },
+  {
+    q: "In CSS, which property controls the space between an element's border and its content?",
+    options: ["margin", "padding", "spacing", "gap"],
+    correct: 1,
+    explain: "Padding is the space between the border and the content inside an element."
+  },
+  {
+    q: "Which HTTP status code means 'Not Found'?",
+    options: ["200", "301", "404", "500"],
+    correct: 2,
+    explain: "404 indicates the requested resource could not be found on the server."
+  },
+  {
+    q: "What is the primary key's main purpose in a relational database table?",
+    options: ["Uniquely identify each row", "Sort the table", "Encrypt data", "Speed up joins only"],
+    correct: 0,
+    explain: "A primary key uniquely identifies every row in a table."
+  },
+  {
+    q: "Which JavaScript method converts a JSON string into a JS object?",
+    options: ["JSON.stringify()", "JSON.parse()", "JSON.toObject()", "Object.fromJSON()"],
+    correct: 1,
+    explain: "JSON.parse() converts a JSON-formatted string into a JavaScript object."
+  },
+  {
+    q: "Which of these is NOT one of the four pillars of OOP?",
+    options: ["Encapsulation", "Polymorphism", "Compilation", "Inheritance"],
+    correct: 2,
+    explain: "The four pillars are Encapsulation, Abstraction, Inheritance, and Polymorphism — not Compilation."
+  },
+  {
+    q: "What does 'REST' stand for in RESTful APIs?",
+    options: ["Representational State Transfer", "Remote Execution State Transfer", "Reliable State Transmission", "Recursive State Transfer"],
+    correct: 0,
+    explain: "REST = Representational State Transfer, an architectural style for web APIs."
+  },
+  {
+    q: "Which loop is guaranteed to execute its body at least once?",
+    options: ["for", "while", "do-while", "foreach"],
+    correct: 2,
+    explain: "A do-while loop checks its condition after the body runs, so it always executes once."
+  },
+  {
+    q: "In Git, which command creates a new branch and switches to it?",
+    options: ["git branch -new", "git checkout -b", "git switch -create", "git new branch"],
+    correct: 1,
+    explain: "`git checkout -b <name>` creates a new branch and switches to it in one step."
+  }
+];
+
+const QUESTIONS_PER_ROUND = 8;
+const TIME_PER_Q = 20; // seconds
+
+let QUESTIONS = [];
+let current = 0;
+let score = 0;
+let answers = []; // {chosen, correct}
+let timerId = null;
+let timeLeft = TIME_PER_Q;
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildRound(){
+  const picked = shuffle(QUESTION_POOL).slice(0, QUESTIONS_PER_ROUND);
+  QUESTIONS = picked.map(item => {
+    const correctText = item.options[item.correct];
+    const shuffledOptions = shuffle(item.options);
+    return {
+      q: item.q,
+      options: shuffledOptions,
+      correct: shuffledOptions.indexOf(correctText),
+      explain: item.explain
+    };
+  });
+}
+
+const card = document.getElementById('card');
+
+function renderStart(){
+  card.innerHTML = `
+    <div class="screen">
+      <h1>Ready to test yourself?</h1>
+      <p>${QUESTIONS_PER_ROUND} random questions from a pool of ${QUESTION_POOL.length} on web &amp; CS fundamentals · ${TIME_PER_Q}s per question · a fresh mix every time you play.</p>
+      <button class="btn-primary" id="startBtn">Start Quiz</button>
+    </div>
+  `;
+  document.getElementById('startBtn').onclick = () => {
+    buildRound();
+    current = 0; score = 0; answers = [];
+    renderQuestion();
+  };
+}
+
+function renderRail(){
+  let html = '';
+  for(let i=0;i<QUESTIONS.length;i++){
+    let cls = i < current ? 'done' : (i === current ? 'current' : '');
+    html += `<div class="rail-seg ${cls}"><i></i></div>`;
+  }
+  return html;
+}
+
+function renderQuestion(){
+  clearInterval(timerId);
+  timeLeft = TIME_PER_Q;
+  const item = QUESTIONS[current];
+
+  card.innerHTML = `
+    <div class="rail">${renderRail()}</div>
+    <div class="meta-row">
+      <span>Question ${current+1} of ${QUESTIONS.length}</span>
+      <span class="timer" id="timer">⏱ ${timeLeft}s</span>
+    </div>
+    <div class="q-body">
+      <div class="q-eyebrow">Choose one</div>
+      <p class="q-text">${item.q}</p>
+      <div class="options" id="options">
+        ${item.options.map((opt,i)=>`
+          <button class="opt" data-i="${i}">
+            <span class="tag">${String.fromCharCode(65+i)}</span>
+            <span>${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="footer-row">
+      <div class="feedback" id="feedback"></div>
+      <button class="next-btn" id="nextBtn">
+        ${current === QUESTIONS.length-1 ? 'See Results →' : 'Next Question →'}
+      </button>
+    </div>
+  `;
+
+  document.querySelectorAll('.opt').forEach(btn=>{
+    btn.addEventListener('click', ()=> selectAnswer(parseInt(btn.dataset.i)));
+  });
+  document.getElementById('nextBtn').addEventListener('click', goNext);
+
+  timerId = setInterval(()=>{
+    timeLeft--;
+    const t = document.getElementById('timer');
+    if(t){
+      t.textContent = `⏱ ${timeLeft}s`;
+      t.classList.toggle('low', timeLeft <= 5);
+    }
+    if(timeLeft <= 0){
+      clearInterval(timerId);
+      selectAnswer(-1); // timeout, no answer
+    }
+  },1000);
+}
+
+function selectAnswer(chosenIndex){
+  clearInterval(timerId);
+  const item = QUESTIONS[current];
+  const correctIndex = item.correct;
+  const isCorrect = chosenIndex === correctIndex;
+  if(isCorrect) score++;
+
+  answers.push({chosen: chosenIndex, correct: correctIndex, isCorrect});
+
+  document.querySelectorAll('.opt').forEach((btn,i)=>{
+    btn.classList.add('disabled');
+    btn.disabled = true;
+    if(i === correctIndex) btn.classList.add('correct');
+    else if(i === chosenIndex) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback');
+  if(chosenIndex === -1){
+    fb.textContent = "⏱ Time's up — " + item.explain;
+    fb.className = 'feedback no';
+  } else if(isCorrect){
+    fb.textContent = "✓ Correct — " + item.explain;
+    fb.className = 'feedback ok';
+  } else {
+    fb.textContent = "✗ Not quite — " + item.explain;
+    fb.className = 'feedback no';
+  }
+
+  document.getElementById('nextBtn').classList.add('show');
+}
+
+function goNext(){
+  current++;
+  if(current < QUESTIONS.length){
+    renderQuestion();
+  } else {
+    renderResults();
+  }
+}
+
+function renderResults(){
+  const pct = Math.round((score / QUESTIONS.length) * 100);
+  const circumference = 2 * Math.PI * 60;
+  const offset = circumference - (pct/100)*circumference;
+
+  let verdict = "Keep practising!";
+  if(pct >= 90) verdict = "Outstanding!";
+  else if(pct >= 70) verdict = "Well done!";
+  else if(pct >= 50) verdict = "Good effort!";
+
+  const ringColor = pct >= 70 ? 'var(--success)' : pct >= 40 ? 'var(--accent)' : 'var(--danger)';
+
+  const breakdownHtml = QUESTIONS.map((item,i)=>{
+    const a = answers[i];
+    return `
+      <div class="b-row">
+        <span><span class="dot ${a.isCorrect ? 'ok':'no'}"></span>Q${i+1}. ${item.q}</span>
+        <span>${a.isCorrect ? 'Correct' : (a.chosen === -1 ? 'Skipped' : 'Wrong')}</span>
+      </div>
+    `;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="screen">
+      <div class="verdict">${verdict}</div>
+      <h1>You scored ${score}/${QUESTIONS.length}</h1>
+      <div class="score-ring">
+        <svg width="150" height="150">
+          <circle cx="75" cy="75" r="60" stroke="#e5e9f0" stroke-width="10" fill="none"/>
+          <circle cx="75" cy="75" r="60" stroke="${ringColor}" stroke-width="10" fill="none"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+        </svg>
+        <div class="num"><b>${pct}%</b><span>accuracy</span></div>
+      </div>
+      <button class="btn-primary" id="retryBtn">Try Again</button>
+      <div class="breakdown">${breakdownHtml}</div>
+    </div>
+  `;
+  document.getElementById('retryBtn').onclick = renderStart;
+}
+
+renderStart();
+</script>
+
+</body>
+</html>
