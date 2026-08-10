@@ -19,6 +19,7 @@ QuizDeck is a simple quiz web application built using HTML, CSS, and JavaScript.
 - JavaScript
 
 Screenshots
+![alt text](image.png)
 
 ## How to Run
 
