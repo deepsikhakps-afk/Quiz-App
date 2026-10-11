@@ -10,7 +10,7 @@ QuizDeck is a simple quiz web application built using HTML, CSS, and JavaScript.
 - Progress bar
 - Final score with accuracy
 - Responsive design
-- No database required
+- No databd
 
 ## Technologies Used
 
