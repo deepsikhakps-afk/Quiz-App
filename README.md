@@ -26,7 +26,7 @@ Screenshots
 
 1. Download or clone the repository.
 2. Open `index.html` in any web browser.
-3. Click **Start Quiz** to begin.
+3. Click **Start Quiz** to 
 
 ## Author
 
