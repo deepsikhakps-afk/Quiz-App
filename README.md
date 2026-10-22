@@ -24,7 +24,7 @@ Screenshots
 
 ## How to Run
 
-1. Download or clone the 
+1. Download or clone the repository.
 2. Open `index.html` in any web browser.
 3. Click **Start Quiz** to begin.
 
