@@ -30,4 +30,4 @@ Screenshots
 
 ## Author
 
-Deepshikha 
+Deepshikha Singh
